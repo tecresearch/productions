@@ -3,16 +3,16 @@ FROM maven:3.9.3-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
-# Copy the Maven wrapper (if you use mvnw)
+# Copy Maven wrapper and settings
 COPY mvnw .
 COPY .mvn .mvn
 
-# Copy only pom.xml and download dependencies first (for Docker cache efficiency)
+# Copy POM and download dependencies (better Docker cache usage)
 COPY pom.xml .
 
 RUN ./mvnw dependency:go-offline
 
-# Copy the entire project source code
+# Copy source code
 COPY src ./src
 
 # Package the application
@@ -23,11 +23,11 @@ FROM eclipse-temurin:17-jdk-jammy
 
 WORKDIR /app
 
-# Copy the JAR from the build stage
+# Copy the built jar from the previous stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose the port Spring Boot runs on
+# Expose the port for Render (Render uses port 8080 by default for web services)
 EXPOSE 8080
 
-# Run the JAR
+# Start the app
 ENTRYPOINT ["java", "-jar", "app.jar"]
