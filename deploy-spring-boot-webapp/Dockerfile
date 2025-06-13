@@ -1,33 +1,14 @@
-# Stage 1: Build the application
-FROM maven:3.9.3-eclipse-temurin-17 AS build
+# Use OpenJDK 21 as base image
+FROM eclipse-temurin:21-jdk-alpine
 
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy Maven wrapper and settings
-COPY mvnw .
-COPY .mvn .mvn
+# Copy the jar file from the target directory to the container
+COPY target/app.jar app.jar
 
-# Copy POM and download dependencies (better Docker cache usage)
-COPY pom.xml .
-
-RUN ./mvnw dependency:go-offline
-
-# Copy source code
-COPY src ./src
-
-# Package the application
-RUN ./mvnw clean package -DskipTests
-
-# Stage 2: Run the application
-FROM eclipse-temurin:17-jdk-jammy
-
-WORKDIR /app
-
-# Copy the built jar from the previous stage
-COPY --from=build /app/target/*.jar app.jar
-
-# Expose the port for Render (Render uses port 8080 by default for web services)
+# Expose port (change if your app uses another port)
 EXPOSE 8080
 
-# Start the app
+# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
